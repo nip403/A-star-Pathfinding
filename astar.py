@@ -3,25 +3,12 @@ import numpy as np
 import sys
 
 class Node:
-    def __init__(self, x, y, s, g=None, h=None):
+    def __init__(self, x, y, val):
         self.x = x
         self.y = y
-        self.val = s
-        self.walkable = s != 3
-
-        self.g = g
-        self.h = h
+        self.val = val
+        self.walkable = True
         self.parent = None
-
-    def set_g(self, g):
-        self.g = g
-
-    def set_h(self, h):
-        self.h = h
-
-    @property
-    def f(self):
-        return self.g + self.h
 
 class Grid:
     def __init__(self, x, y, w):
@@ -30,15 +17,9 @@ class Grid:
         self.w = w
         self.grid = [[Node(j, i, 0) for j in range(x//w)] for i in range(y//w)]
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return self
-
-    def get_neighbours(self):
-        x = self.current.x
-        y = self.current.y
+    def get_neighbours(self, current):
+        x = current.x
+        y = current.y
 
         contenders = [
             [x+1, y],
@@ -47,16 +28,11 @@ class Grid:
             [x, y-1]
         ]
 
-        return filter(lambda i: self.grid[i[1]][i[0]] not in self.closed and self.grid[i[1]][i[0]].walkable and 0 <= i[0] <= len(self.grid[0]) - 1 and 0 <= i[1] <= len(self.grid) - 1, contenders)
+        return list(map(lambda p: self.grid[p[1]][p[0]], filter(lambda i: 0 <= i[0] <= len(self.grid[0]) - 1 and 0 <= i[1] <= len(self.grid) - 1 and self.grid[i[1]][i[0]].walkable, contenders)))
 
-    def dist(self, a, b):
-        dx = np.abs(a.x - b.x)
-        dy = np.abs(a.y - b.y)
-
-        if dx > dy:
-            return (14 * dy) + (10 * (dx - dy))
-        else:
-            return (14 * dx) + (10 * (dy - dx))
+    def heuristic(self, a, b):
+        dx, dy = np.abs(a.x - b.x), np.abs(a.y - b.y)
+        return (14 * min(dx, dy)) + (10 * np.abs(dx - dy))
 
 class UI(Grid):
     def __init__(self, x=1200, y=800, w=20):
@@ -103,7 +79,6 @@ class UI(Grid):
                             self.grid[y][x].val = state
 
                             if state == 1:
-                                self.current = self.grid[y][x]
                                 self.start = self.grid[y][x]
                             elif state == 2:
                                 self.dest = self.grid[y][x]
@@ -123,74 +98,96 @@ class UI(Grid):
 
             self.draw()
 
-        self.current.set_g(0)
-        self.current.set_h(self.dist(self.start, self.dest))
-        self.open = [self.current]
-        self.closed = []
+    def dijkstra(self):
+        pass
 
-    def run(self):
-        while self.open:
-            self.clock.tick(20)
+    def astar(self):
+        fringe = set([self.start])
+        closed = set()
+
+        g = {self.start: 0}
+        f = {self.start: self.heuristic(self.start, self.dest)}
+        camefrom = {}
+
+        while fringe:
+            print(fringe)
+            #self.clock.tick(20)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
-            print(1, self.open, self.closed, self.current)
-
             self.draw()
-            next(self)##############
 
-            self.current = min(self.open, key=lambda i: i.f)
+            current = None
+            currentf = None
 
-            print(3, self.current)
+            for node in fringe:
+                if current is None or f[node] < currentf:
+                    currentf = f[node]
+                    current = node
+            
+            if current == self.dest:
+                path = [current]
 
-            self.open.remove(self.current)
-            self.closed.append(self.current)
+                while current in camefrom:
+                    current.val = 4
+                    current = camefrom[current]
+                    path.append(current)
 
-            if self.current == self.dest:
-                break
+                path[0].val = 2
+                path[-1].val = 1
 
-            for n in self.get_neighbours():
-                n = self.grid[n[1]][n[0]]
-                n.set_g(self.dist(self.start, n))
-                n.set_h(self.dist(n, self.dest))
+                return
 
-                movement_cost = self.current.g + self.dist(self.current, n)
+            try:
+                fringe.remove(current)
+            except:
+                pass
 
-                if movement_cost < n.g or not n in self.open:
-                    n.set_g(movement_cost)
-                    n.set_h(self.dist(n, self.dest))
-                    n.parent = self.current
+            closed.add(current)
 
-                    if not n in self.open:
-                        self.open.append(n)
+            for n in self.get_neighbours(current):
+                if n in closed:
+                    continue
 
-                    self.current = n
+                n.val = 5
+                n_g = g[current] + 1
 
-            self.current.val = 5
+                if not n in fringe:
+                    fringe.add(n)
+                elif n_g >= g[n]:
+                    continue
 
-        #retrace
-        current = self.dest
-        path = []
-        while not current == self.start:
-            path.append(current)
-            current = current.parent
-        for i in path:
-            i.val = 4
+                camefrom[n] = current
+                g[n] = n_g
+                f[n] = g[n] + self.heuristic(n, self.dest)
 
+        raise Exception("No path found") # add screen for this case
+
+    def waitingscr(self):
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: 
                     pygame.quit()
                     sys.exit()
+                
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        return
             
             self.draw()
 
-def main(ui):
-    ui.usersetup()
-    ui.run()
+    def reset(self, x=1200, y=800, w=20):
+        self.__init__(x, y, w)
+
+def main(app):
+    while True:
+        app.reset()
+        app.usersetup()
+        app.astar()
+        app.waitingscr()
 
 if __name__ == "__main__":
     main(UI())
