@@ -1,5 +1,4 @@
 import pygame
-import numpy as np
 import sys
 
 class Node:
@@ -31,10 +30,10 @@ class Grid:
         return list(map(lambda p: self.grid[p[1]][p[0]], filter(lambda i: 0 <= i[0] <= len(self.grid[0]) - 1 and 0 <= i[1] <= len(self.grid) - 1 and self.grid[i[1]][i[0]].walkable, contenders)))
 
     def heuristic(self, a, b):
-        dx, dy = np.abs(a.x - b.x), np.abs(a.y - b.y)
-        return (14 * min(dx, dy)) + (10 * np.abs(dx - dy))
+        dx, dy = abs(a.x - b.x), abs(a.y - b.y)
+        return (14 * min(dx, dy)) + (10 * abs(dx - dy))
 
-class UI(Grid):
+class App(Grid):
     def __init__(self, x=1200, y=800, w=20):
         assert all(type(i) == int for i in [x, y, w]), "" # type check
 
@@ -190,4 +189,4 @@ def main(app):
         app.waitingscr()
 
 if __name__ == "__main__":
-    main(UI())
+    main(App())
