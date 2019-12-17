@@ -75,7 +75,8 @@ class UI(Grid):
             1: (255, 0, 0), # start
             2: (0, 255, 0), # end
             3: (0, 0, 0), # wall
-            4: (0, 0, 255) # path
+            4: (0, 0, 255), # path
+            5: (255, 255, 0), # search area
         }
 
     def draw(self):
@@ -118,6 +119,7 @@ class UI(Grid):
 
                 if not self.grid[y][x].val:
                     self.grid[y][x].val = state
+                    self.grid[y][x].walkable = False
 
             self.draw()
 
@@ -128,7 +130,7 @@ class UI(Grid):
 
     def run(self):
         while self.open:
-            self.clock.tick(5)
+            self.clock.tick(20)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -140,10 +142,7 @@ class UI(Grid):
             self.draw()
             next(self)##############
 
-            for i in self.open:
-                print(2, i, self.current, i.f, self.current.f)
-                if i.f < self.current.f or (i.f == self.current.f and i.h <= self.current.h):
-                    self.current = i
+            self.current = min(self.open, key=lambda i: i.f)
 
             print(3, self.current)
 
@@ -169,6 +168,8 @@ class UI(Grid):
                         self.open.append(n)
 
                     self.current = n
+
+            self.current.val = 5
 
         #retrace
         current = self.dest
