@@ -41,7 +41,7 @@ class App(Grid):
         pygame.init()
 
         self.surf = pygame.display.set_mode((self.x, self.y), 0, 32)
-        self.clock = pygame.time.Clock()
+        #self.clock = pygame.time.Clock()
 
         pygame.display.set_caption("A* Demo")
 
@@ -106,9 +106,6 @@ class App(Grid):
         camefrom = {}
 
         while fringe:
-            print(fringe)
-            #self.clock.tick(20)
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
