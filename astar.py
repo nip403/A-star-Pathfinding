@@ -97,9 +97,6 @@ class App(Grid):
 
             self.draw()
 
-    def dijkstra(self):
-        pass
-
     def astar(self):
         fringe = set([self.start])
         closed = set()
@@ -180,13 +177,10 @@ class App(Grid):
 
     def reset(self, x=1200, y=800, w=20):
         self.__init__(x, y, w)
+        
+    def demo(self):
+        self.reset()
+        self.usersetup()
+        self.astar()
+        self.waitingscr()
 
-def main(app):
-    while True:
-        app.reset()
-        app.usersetup()
-        app.astar()
-        app.waitingscr()
-
-if __name__ == "__main__":
-    main(App())
