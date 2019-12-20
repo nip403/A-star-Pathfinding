@@ -88,12 +88,17 @@ class App(Grid):
                     if event.key == pygame.K_RETURN and state == 3:
                         state += 1
 
-            if state == 3 and pygame.mouse.get_pressed()[0]:
+            if state == 3:
                 x, y = list(map(lambda i: i//self.w, pygame.mouse.get_pos()))
 
-                if not self.grid[y][x].val:
-                    self.grid[y][x].val = state
-                    self.grid[y][x].walkable = False
+                if pygame.mouse.get_pressed()[0]:
+                    if not self.grid[y][x].val:
+                        self.grid[y][x].val = state
+                        self.grid[y][x].walkable = False
+                elif pygame.mouse.get_pressed()[2]:
+                    if self.grid[y][x].val == state:
+                        self.grid[y][x].val = 0
+                        self.grid[y][x].walkable = True
 
             self.draw()
 
